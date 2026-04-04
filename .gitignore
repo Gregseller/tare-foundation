@@ -32,3 +32,4 @@ tare_cli.py
 # Windows артефакты
 *:Zone.Identifier
 "*:Zone.Identifier"
+TARE_RUN_LOG.jsonl
