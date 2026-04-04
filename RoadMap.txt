@@ -1,0 +1,92 @@
+ 
+┌──────────────────────────────────────────────────────────────┐
+│                        PHASE 1 — FOUNDATION                   │
+│  Time Engine  •  TickDataEngine  •  Snapshot v1  •  Memory    │
+│  -----------------------------------------------------------  │
+│  Goal: Deterministic data + time + replay                     │
+└──────────────────────────────────────────────────────────────┘
+
+                │
+                ▼
+
+┌──────────────────────────────────────────────────────────────┐
+│                 PHASE 2 — MICROSTRUCTURE                     │
+│  LOD1→LOD2→LOD3 • Latency • Slippage • Partial Fills          │
+│  Queue Position • FX Gaps • Swap/Rollover                     │
+│  -----------------------------------------------------------  │
+│  Goal: Realistic market physics                               │
+└──────────────────────────────────────────────────────────────┘
+
+                │
+                ▼
+
+┌──────────────────────────────────────────────────────────────┐
+│                 PHASE 3 — EXECUTION CORE                     │
+│  ExecutionEngine • PortfolioEngine • Fixed-Point Math         │
+│  Adequacy v1 • Order Lifecycle                                │
+│  -----------------------------------------------------------  │
+│  Goal: Trustworthy execution engine                           │
+└──────────────────────────────────────────────────────────────┘
+
+                │
+                ▼
+
+┌──────────────────────────────────────────────────────────────┐
+│                 PHASE 4 — STRATEGY ENGINE                    │
+│  Strategy DAG • Alpha/Risk Nodes • Vectorized Bridge          │
+│  Dependency Graph • Cycle Detection                           │
+│  -----------------------------------------------------------  │
+│  Goal: Infinite extensibility without chaos                   │
+└──────────────────────────────────────────────────────────────┘
+
+                │
+                ▼
+
+┌──────────────────────────────────────────────────────────────┐
+│              PHASE 5 — VALIDATION & ADEQUACY                 │
+│  Adequacy v2 • Baseline Strategies • KS Tests • FX Adequacy   │
+│  -----------------------------------------------------------  │
+│  Goal: Proof that the system matches reality                  │
+└──────────────────────────────────────────────────────────────┘
+
+                │
+                ▼
+
+┌──────────────────────────────────────────────────────────────┐
+│               PHASE 6 — AUTO‑RESEARCHER                      │
+│  Hypothesis Generator • Batch Testing • Meta-Learning         │
+│  Auto-Debugger • Governance Layer                             │
+│  -----------------------------------------------------------  │
+│  Goal: Self-improving research machine                        │
+└──────────────────────────────────────────────────────────────┘
+
+                │
+                ▼
+
+┌──────────────────────────────────────────────────────────────┐
+│               PHASE 7 — DISTRIBUTED COMPUTE                  │
+│  Ray/Dask/K8s • Resource Scheduler • Prefetching              │
+│  -----------------------------------------------------------  │
+│  Goal: Thousands of strategies per day                        │
+└──────────────────────────────────────────────────────────────┘
+
+                │
+                ▼
+
+┌──────────────────────────────────────────────────────────────┐
+│                 PHASE 8 — LIVE TRADING                       │
+│  FIX/WebSocket • Real-Time Engine • Paper→Live Parity         │
+│  -----------------------------------------------------------  │
+│  Goal: Zero-code transition to live trading                   │
+└──────────────────────────────────────────────────────────────┘
+
+                │
+                ▼
+
+┌──────────────────────────────────────────────────────────────┐
+│             PHASE 9 — CONTINUOUS EVOLUTION                   │
+│  Drift Detection • Regime Detection • Auto-Refinement         │
+│  -----------------------------------------------------------  │
+│  Goal: A living, adaptive system                              │
+└──────────────────────────────────────────────────────────────┘
+ 

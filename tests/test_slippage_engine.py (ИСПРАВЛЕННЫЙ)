@@ -1,0 +1,142 @@
+# ... предыдущий код ...
+
+class TestComputeSlippage(unittest.TestCase):
+    """Тесты метода compute_slippage."""
+
+    def test_compute_slippage_basic(self):
+        """Базовый расчет slippage."""
+        engine = SlippageEngine(
+            max_spread_impact=100,
+            size_multiplier=1,
+            volatility_factor=10
+        )
+        
+        # bid=100, ask=110 (spread=10)
+        # Базовый slippage = 10 / 2 = 5 bp
+        slippage = engine.compute_slippage(
+            order_size=100,
+            bid=100,
+            ask=110,
+            spread_history=[10, 10, 10]
+        )
+        
+        assert isinstance(slippage, int)
+        assert slippage >= 0
+
+    def test_compute_slippage_invalid_order_size(self):
+        """Отрицательный размер приказа вызывает исключение."""
+        engine = SlippageEngine()
+        
+        with self.assertRaises(ValueError):
+            engine.compute_slippage(
+                order_size=-100,
+                bid=100,
+                ask=110,
+                spread_history=[10]
+            )
+
+    def test_compute_slippage_invalid_bid_ask(self):
+        """bid >= ask вызывает исключение."""
+        engine = SlippageEngine()
+        
+        with self.assertRaises(ValueError):
+            engine.compute_slippage(
+                order_size=100,
+                bid=110,
+                ask=100,
+                spread_history=[10]
+            )
+
+    def test_compute_slippage_deterministic(self):
+        """Одинаковые входные данные → одинаковый результат."""
+        engine = SlippageEngine(
+            max_spread_impact=150,
+            size_multiplier=2,
+            volatility_factor=12
+        )
+        
+        params = {
+            'order_size': 500,
+            'bid': 5000,
+            'ask': 5050,
+            'spread_history': [50, 48, 52, 49, 51]
+        }
+        
+        result1 = engine.compute_slippage(**params)
+        result2 = engine.compute_slippage(**params)
+        result3 = engine.compute_slippage(**params)
+        
+        assert result1 == result2 == result3
+        assert isinstance(result1, int)
+
+
+class TestComputeSlippageStream(unittest.TestCase):
+    """Тесты метода compute_slippage_stream."""
+
+    def test_compute_slippage_stream_empty(self):
+        """Пустой список приказов возвращает пустой результат."""
+        engine = SlippageEngine()
+        result = engine.compute_slippage_stream([])
+        assert result == []
+
+    def test_compute_slippage_stream_single_order(self):
+        """Один приказ обрабатывается корректно."""
+        engine = SlippageEngine()
+        
+        orders = [
+            {
+                'size': 100,
+                'bid': 100,
+                'ask': 110,
+                'spread_history': [10, 10, 10]
+            }
+        ]
+        
+        result = engine.compute_slippage_stream(orders)
+        
+        assert len(result) == 1
+        assert isinstance(result[0], int)
+
+    def test_compute_slippage_stream_multiple_orders(self):
+        """Несколько приказов обрабатываются корректно."""
+        engine = SlippageEngine()
+        
+        orders = [
+            {'size': 100, 'bid': 100, 'ask': 110, 'spread_history': [10]},
+            {'size': 200, 'bid': 100, 'ask': 115, 'spread_history': [15]},
+            {'size': 50, 'bid': 100, 'ask': 105, 'spread_history': [5]},
+        ]
+        
+        result = engine.compute_slippage_stream(orders)
+        
+        assert len(result) == 3
+        assert all(isinstance(s, int) for s in result)
+
+    def test_compute_slippage_stream_deterministic(self):
+        """Поток приказов обрабатывается детерминированно."""
+        engine = SlippageEngine()
+        
+        orders = [
+            {'size': 150, 'bid': 5000, 'ask': 5050, 'spread_history': [50, 48]},
+            {'size': 200, 'bid': 5000, 'ask': 5060, 'spread_history': [60, 59]},
+        ]
+        
+        result1 = engine.compute_slippage_stream(orders)
+        result2 = engine.compute_slippage_stream(orders)
+        
+        assert result1 == result2
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
+```
+
+## Проверка
+
+Запустите тесты:
+
+```bash
+python -m pytest tests/test_slippage_engine.py -v
+```
+
+Все синтаксические ошибки должны исчезнуть.

@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py:Zone.Identifier
+
+# Virtual env
+.venv/
+
+# Secrets
+.env
+
+# Data (36GB не коммитим)
+ascii/
+
+# Logs и временные файлы
+*.log
+debug_workspace/
+api_costs.json
+deepseek_usage.json
+TARE_MANIFEST_backup.toml
+scaffold_*_response.log
+model_response.log
+manifest_raw_response.log
+
+# Дубли в корне
+tick_reader.py
+test_tick_reader.py
+tare_cli.py
+
+# Windows артефакты
+*:Zone.Identifier
+"*:Zone.Identifier"

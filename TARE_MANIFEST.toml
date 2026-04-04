@@ -1,0 +1,378 @@
+# TARE_MANIFEST.toml
+# Сгенерирован: 2026-04-03 15:37
+# Источник: PROJECT_MAP.md
+# Модель: CLAUDE
+# НЕ РЕДАКТИРУЙ ВРУЧНУЮ статус 'done' — он обновляется дебагером
+
+[project]
+name = "TARE"
+version = "0.1.0"
+phase_current = 1
+generated_at = "2025-04-10"
+description = "Tick-Level Algorithmic Research Environment"
+
+[[phase]]
+number = 1
+name = "Foundation"
+goal = "Deterministic data + time + replay"
+status = "in_progress"
+modules = ["time_engine", "tick_data_engine", "snapshot_v1", "memory_ring_buffer", "memory_chunking", "memory_mmap_loader"]
+
+[[phase]]
+number = 2
+name = "Microstructure"
+goal = "Realistic market physics"
+status = "pending"
+modules = ["lod_engine", "latency_model", "slippage_engine", "partial_fills", "queue_position", "fx_gaps", "swap_rollover"]
+
+[[phase]]
+number = 3
+name = "Execution Core"
+goal = "Trustworthy execution engine"
+status = "pending"
+modules = ["execution_engine", "portfolio_engine", "fixed_point_math", "adequacy_v1", "order_lifecycle"]
+
+[[phase]]
+number = 4
+name = "Strategy Engine"
+goal = "Infinite extensibility without chaos"
+status = "pending"
+modules = ["strategy_dag", "alpha_nodes", "risk_nodes", "vectorized_bridge", "dependency_graph", "cycle_detection"]
+
+[[phase]]
+number = 5
+name = "Validation & Adequacy"
+goal = "Proof that the system matches reality"
+status = "pending"
+modules = ["adequacy_v2", "baseline_strategies", "ks_tests", "fx_adequacy"]
+
+[[phase]]
+number = 6
+name = "Auto-Researcher"
+goal = "Self-improving research machine"
+status = "pending"
+modules = ["hypothesis_generator", "batch_testing", "meta_learning", "auto_debugger", "governance_layer"]
+
+[[phase]]
+number = 7
+name = "Distributed Compute"
+goal = "Thousands of strategies per day"
+status = "pending"
+modules = ["ray_scheduler", "dask_scheduler", "k8s_scheduler", "resource_scheduler", "prefetching"]
+
+[[phase]]
+number = 8
+name = "Live Trading"
+goal = "Zero-code transition to live trading"
+status = "pending"
+modules = ["fix_connector", "websocket_connector", "real_time_engine", "paper_live_parity"]
+
+[[phase]]
+number = 9
+name = "Continuous Evolution"
+goal = "A living, adaptive system"
+status = "pending"
+modules = ["drift_detection", "regime_detection", "auto_refinement"]
+
+[[module]]
+name = "time_engine"
+path = "tare/time_engine/time_engine.py"
+test = "tare/time_engine/test_time_engine.py"
+phase = 1
+status = "done"
+depends_on = []
+role = "Deterministic time transformation (market_time → local_time → simulation_time)"
+interface = "class TimeEngine: def __init__(market_tz: str, local_tz: str) -> None; def market_to_simulation(market_time: int) -> int; def get_event_counter() -> int"
+tare_rules = ["deterministic", "no_random", "only_int"]
+
+[[module]]
+name = "tick_reader"
+path = "tick_reader.py"
+test = "test_tick_reader.py"
+phase = 1
+status = "done"
+depends_on = []
+role = "Read and parse binary/CSV tick streams with validation"
+interface = "class TickReader: def read_csv(path: str) -> list[dict]; def read_binary(path: str, format: str) -> list[dict]; def validate_ticks(ticks: list[dict]) -> bool"
+tare_rules = ["deterministic", "stdlib_only"]
+
+[[module]]
+name = "tick_cleaner"
+path = "tare/tick_data_engine/tick_cleaner.py"
+test = "tests/test_tick_cleaner.py"
+phase = 1
+status = "done"
+depends_on = ["tick_reader"]
+role = "Remove duplicates, filter invalid ticks, standardize data"
+interface = "class TickCleaner: def remove_duplicates(ticks: list[dict]) -> list[dict]; def filter_invalid(ticks: list[dict]) -> list[dict]; def standardize(ticks: list[dict]) -> list[dict]"
+tare_rules = ["deterministic", "no_random", "stdlib_only"]
+
+[[module]]
+name = "jitter_corrector"
+path = "tare/tick_data_engine/jitter_corrector.py"
+test = "tests/test_jitter_corrector.py"
+phase = 1
+status = "stub"
+depends_on = ["time_engine", "tick_cleaner"]
+role = "Correct timing artifacts and synchronize multi-source ticks"
+interface = "class JitterCorrector: def correct_timestamps(ticks: list[dict], max_jitter_us: int) -> list[dict]; def synchronize_sources(ticks_by_source: dict[str, list[dict]]) -> list[dict]"
+tare_rules = ["deterministic", "only_int"]
+
+[[module]]
+name = "tick_data_engine"
+path = "tare/tick_data_engine/__init__.py"
+test = "tests/test_tick_data_engine.py"
+phase = 1
+status = "done"
+depends_on = ["tick_reader", "tick_cleaner", "jitter_corrector"]
+role = "Orchestrate tick ingestion, cleaning, correction pipeline"
+interface = "class TickDataEngine: def ingest(source: str, format: str) -> None; def get_clean_ticks() -> list[dict]; def export_snapshot(path: str) -> None"
+tare_rules = ["deterministic", "stdlib_only"]
+
+[[module]]
+name = "ring_buffer"
+path = "tare/memory/ring_buffer.py"
+test = "tests/test_ring_buffer.py"
+phase = 1
+status = "done"
+depends_on = []
+role = "Memory-efficient circular buffer for tick streams"
+interface = "class RingBuffer: def __init__(capacity: int) -> None; def push(item: dict) -> None; def pop() -> dict; def peek(offset: int) -> dict; def is_full() -> bool"
+tare_rules = ["deterministic", "stdlib_only"]
+
+[[module]]
+name = "chunking"
+path = "tare/memory/chunking.py"
+test = "tests/test_chunking.py"
+phase = 1
+status = "done"
+depends_on = []
+role = "Split large tick streams into memory-friendly chunks"
+interface = "class Chunking: def chunk_by_size(ticks: list[dict], chunk_size: int) -> list[list[dict]]; def chunk_by_time(ticks: list[dict], time_window_us: int) -> list[list[dict]]"
+tare_rules = ["deterministic", "stdlib_only"]
+
+[[module]]
+name = "mmap_loader"
+path = "tare/memory/mmap_loader.py"
+test = "tests/test_mmap_loader.py"
+phase = 1
+status = "done"
+depends_on = []
+role = "Load large binary tick files using memory-mapped I/O"
+interface = "class MmapLoader: def load(path: str, format: str) -> Iterator[dict]; def preload_metadata(path: str) -> dict[str, int]"
+tare_rules = ["deterministic", "stdlib_only"]
+
+[[module]]
+name = "snapshot_v1"
+path = "tare/snapshot/snapshot_v1.py"
+test = "tests/test_snapshot_v1.py"
+phase = 1
+status = "done"
+depends_on = ["tick_data_engine"]
+role = "Define immutable snapshot structure for deterministic replay"
+interface = "class Snapshot: def __init__(ticks: list[dict], metadata: dict) -> None; def serialize(path: str) -> None; def deserialize(path: str) -> 'Snapshot'; def get_tick_at(time_us: int) -> dict"
+tare_rules = ["deterministic", "stdlib_only"]
+
+[[module]]
+name = "replay"
+path = "tare/snapshot/replay.py"
+test = "tests/test_replay.py"
+phase = 1
+status = "done"
+depends_on = ["snapshot_v1", "time_engine"]
+role = "Replay historical tick stream from snapshot with exact timing"
+interface = "class Replay: def __init__(snapshot: Snapshot) -> None; def start() -> None; def next_tick() -> dict; def seek(time_us: int) -> None; def is_finished() -> bool"
+tare_rules = ["deterministic", "no_random"]
+
+[[module]]
+name = "assertions"
+path = "tare/utils/assertions.py"
+test = "tests/test_assertions.py"
+phase = 1
+status = "done"
+depends_on = []
+role = "Runtime validation and contract assertions for TARE rules"
+interface = "def assert_deterministic(func: Callable) -> Callable; def assert_no_nans(data: list[dict]) -> None; def assert_monotonic_time(ticks: list[dict]) -> None"
+tare_rules = ["deterministic", "stdlib_only"]
+
+[[module]]
+name = "lod_engine"
+path = "tare/microstructure/lod_engine.py"
+test = "tests/test_lod_engine.py"
+phase = 2
+status = "stub"
+depends_on = ["tick_data_engine"]
+role = "Level-of-detail modeling (LOD1→LOD2→LOD3) for market depth"
+interface = "class LODEngine: def compute_lod1(ticks: list[dict]) -> dict; def compute_lod2(ticks: list[dict]) -> dict; def compute_lod3(ticks: list[dict]) -> dict"
+tare_rules = ["deterministic", "only_int"]
+
+[[module]]
+name = "latency_model"
+path = "tare/microstructure/latency_model.py"
+test = "tests/test_latency_model.py"
+phase = 2
+status = "done"
+depends_on = ["time_engine"]
+role = "Model order submission to execution latency"
+interface = "class LatencyModel: def __init__(profile: dict) -> None; def simulate_latency(order_time_us: int) -> int"
+tare_rules = ["deterministic", "only_int"]
+
+[[module]]
+name = "slippage_engine"
+path = "tare/microstructure/slippage_engine.py"
+test = "tests/test_slippage_engine.py"
+phase = 2
+status = "done"
+depends_on = ["tick_data_engine", "latency_model"]
+role = "Calculate realistic slippage based on order size and market state"
+interface = "class SlippageEngine: def compute_slippage(order_size: int, bid: int, ask: int, spread_history: list[int]) -> int"
+tare_rules = ["deterministic", "only_int"]
+
+[[module]]
+name = "partial_fills"
+path = "tare/microstructure/partial_fills.py"
+test = "tests/test_partial_fills.py"
+phase = 2
+status = "stub"
+depends_on = ["tick_data_engine"]
+role = "Simulate partial order fills based on market depth"
+interface = "class PartialFillSimulator: def fill_order(order_size: int, market_depth: dict) -> list[tuple[int, int]]"
+tare_rules = ["deterministic", "only_int"]
+
+[[module]]
+name = "execution_engine"
+path = "tare/execution/execution_engine.py"
+test = "tests/test_execution_engine.py"
+phase = 3
+status = "stub"
+depends_on = ["tick_data_engine", "latency_model", "slippage_engine", "partial_fills"]
+role = "Execute orders with realistic microstructure and account for market impact"
+interface = "class ExecutionEngine: def submit_order(symbol: str, side: str, size: int, order_type: str) -> int; def get_execution_report(order_id: int) -> dict"
+tare_rules = ["deterministic", "only_int"]
+
+[[module]]
+name = "portfolio_engine"
+path = "tare/execution/portfolio_engine.py"
+test = "tests/test_portfolio_engine.py"
+phase = 3
+status = "stub"
+depends_on = ["execution_engine", "tick_data_engine"]
+role = "Track positions, P&L, exposure, risk metrics"
+interface = "class PortfolioEngine: def add_position(symbol: str, quantity: int, price: int) -> None; def get_pnl() -> dict; def get_exposure() -> dict; def get_risk_metrics() -> dict"
+tare_rules = ["deterministic", "only_int"]
+
+[[module]]
+name = "strategy_dag"
+path = "tare/strategy/strategy_dag.py"
+test = "tests/test_strategy_dag.py"
+phase = 4
+status = "stub"
+depends_on = ["execution_engine"]
+role = "Define strategy as DAG of alpha/risk/execution nodes"
+interface = "class StrategyDAG: def __init__() -> None; def add_node(name: str, node_type: str, func: Callable) -> None; def add_edge(from_node: str, to_node: str) -> None; def execute() -> dict"
+tare_rules = ["deterministic", "stdlib_only"]
+
+[[module]]
+name = "adequacy_v1"
+path = "tare/validation/adequacy_v1.py"
+test = "tests/test_adequacy_v1.py"
+phase = 3
+status = "stub"
+depends_on = ["execution_engine", "portfolio_engine"]
+role = "Validate that execution matches realistic market conditions"
+interface = "class AdequacyV1: def validate_execution(backtest_report: dict, market_data: dict) -> dict[str, bool]; def get_violations() -> list[str]"
+tare_rules = ["deterministic", "stdlib_only"]
+
+[[module]]
+name = "adequacy_v2"
+path = "tare/validation/adequacy_v2.py"
+test = "tests/test_adequacy_v2.py"
+phase = 5
+status = "stub"
+depends_on = ["adequacy_v1"]
+role = "Extended validation with KS tests and FX adequacy checks"
+interface = "class AdequacyV2: def ks_test(observed: list[float], expected: list[float]) -> float; def fx_adequacy_check(fx_pairs: dict) -> dict[str, bool]"
+tare_rules = ["deterministic", "stdlib_only"]
+
+[[module]]
+name = "hypothesis_generator"
+path = "tare/research/hypothesis_generator.py"
+test = "tests/test_hypothesis_generator.py"
+phase = 6
+status = "stub"
+depends_on = ["strategy_dag"]
+role = "Auto-generate trading hypotheses and strategy variations"
+interface = "class HypothesisGenerator: def generate(n: int, template: str) -> list[dict]; def mutate(strategy: dict) -> dict"
+tare_rules = ["deterministic", "no_random"]
+
+[[module]]
+name = "batch_testing"
+path = "tare/research/batch_testing.py"
+test = "tests/test_batch_testing.py"
+phase = 6
+status = "stub"
+depends_on = ["strategy_dag", "execution_engine"]
+role = "Run backtest batches and aggregate results"
+interface = "class BatchTesting: def submit_batch(strategies: list[dict], date_range: tuple[int, int]) -> str; def get_results(batch_id: str) -> dict"
+tare_rules = ["deterministic", "stdlib_only"]
+
+[[module]]
+name = "auto_debugger"
+path = "tare/research/auto_debugger.py"
+test = "tests/test_auto_debugger.py"
+phase = 6
+status = "missing"
+depends_on = ["batch_testing", "adequacy_v2"]
+role = "Automatically diagnose and suggest fixes for failed backtests"
+interface = "class AutoDebugger: def analyze_failure(backtest_report: dict, market_data: dict) -> dict; def suggest_fixes() -> list[str]"
+tare_rules = ["deterministic", "stdlib_only"]
+
+[[module]]
+name = "fix_connector"
+path = "tare/live/fix_connector.py"
+test = "tests/test_fix_connector.py"
+phase = 8
+status = "stub"
+depends_on = ["execution_engine"]
+role = "FIX protocol bridge to live brokers"
+interface = "class FIXConnector: def __init__(broker_config: dict) -> None; def send_order(order: dict) -> str; def receive_execution(msg: str) -> dict"
+tare_rules = ["deterministic", "stdlib_only"]
+
+[[module]]
+name = "websocket_connector"
+path = "tare/live/websocket_connector.py"
+test = "tests/test_websocket_connector.py"
+phase = 8
+status = "stub"
+depends_on = ["execution_engine"]
+role = "WebSocket bridge for real-time data and order execution"
+interface = "class WebSocketConnector: def __init__(exchange_config: dict) -> None; def connect() -> None; def subscribe(symbols: list[str]) -> None; def send_order(order: dict) -> str"
+tare_rules = ["deterministic", "stdlib_only"]
+
+[[module]]
+name = "drift_detection"
+path = "tare/evolution/drift_detection.py"
+test = "tests/test_drift_detection.py"
+phase = 9
+status = "stub"
+depends_on = ["adequacy_v2", "batch_testing"]
+role = "Detect market regime drift and strategy performance degradation"
+interface = "class DriftDetector: def detect(live_data: dict, baseline: dict) -> dict[str, float]; def is_drifted(threshold: float) -> bool"
+tare_rules = ["deterministic", "stdlib_only"]
+
+[[module]]
+name = "regime_detection"
+path = "tare/evolution/regime_detection.py"
+test = "tests/test_regime_detection.py"
+phase = 9
+status = "stub"
+depends_on = ["tick_data_engine"]
+role = "Identify and classify market regimes (trending, mean-revert, etc.)"
+interface = "class RegimeDetector: def detect_regime(ticks: list[dict], lookback: int) -> str; def get_regime_probability(regime: str) -> float"
+tare_rules = ["deterministic", "stdlib_only"]
+
+[project.dependencies]
+stdlib_only = true
+no_random = true
+deterministic = true
+only_int = true
