@@ -79,7 +79,6 @@ class FIXConnector:
         self._order_counter += 1
         order_id = self._generate_order_id(order)
         self._orders[order_id] = order.copy()
-
         self._message_queue.append({
             "type": "execution",
             "order_id": order_id,

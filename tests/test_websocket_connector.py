@@ -1,45 +1,93 @@
 import unittest
-from tare.live.fix_connector import FIXConnector
+from tare.live.websocket_connector import WebSocketConnector
 
 
-class TestFIXConnector(unittest.TestCase):
+class TestWebSocketConnector(unittest.TestCase):
     def setUp(self):
         self.config = {
-            "sender_comp_id": "SENDER123",
-            "target_comp_id": "TARGET456"
+            "host": "ws.test.com",
+            "port": 9000,
+            "api_key": "test_key",
+            "api_secret": "test_secret"
         }
-        self.connector = FIXConnector(self.config)
+        self.connector = WebSocketConnector(self.config)
+
     # ----- __init__ -----
     def test_init_valid(self):
-        connector = FIXConnector(self.config)
-        self.assertIsInstance(connector, FIXConnector)
+        conn = WebSocketConnector(self.config)
+        self.assertIsInstance(conn, WebSocketConnector)
 
-    def test_init_missing_key(self):
-        bad_config = {"host": "localhost"}
+    def test_init_with_max_buffer(self):
+        cfg = self.config.copy()
+        cfg["max_buffer_size"] = 5000
+        conn = WebSocketConnector(cfg)
+        self.assertIsInstance(conn, WebSocketConnector)
+
+    def test_init_missing_host(self):
+        cfg = self.config.copy()
+        del cfg["host"]
         with self.assertRaises(ValueError):
-            FIXConnector(bad_config)
+            WebSocketConnector(cfg)
 
-    def test_init_extra_key_ok(self):
-        extra_config = self.config.copy()
-        extra_config["extra"] = "value"
-        connector = FIXConnector(extra_config)
-        self.assertIsInstance(connector, FIXConnector)
-
-    def test_init_not_dict(self):
+    def test_init_host_not_str(self):
+        cfg = self.config.copy()
+        cfg["host"] = 123
         with self.assertRaises(ValueError):
-            FIXConnector("not dict")
+            WebSocketConnector(cfg)
 
-    def test_init_sender_not_str(self):
-        bad = self.config.copy()
-        bad["sender_comp_id"] = 123
+    def test_init_missing_port(self):
+        cfg = self.config.copy()
+        del cfg["port"]
         with self.assertRaises(ValueError):
-            FIXConnector(bad)
+            WebSocketConnector(cfg)
 
-    def test_init_target_not_str(self):
-        bad = self.config.copy()
-        bad["target_comp_id"] = 123
+    def test_init_port_not_int(self):
+        cfg = self.config.copy()
+        cfg["port"] = "8080"
         with self.assertRaises(ValueError):
-            FIXConnector(bad)
+            WebSocketConnector(cfg)
+
+    def test_init_port_non_positive(self):
+        cfg = self.config.copy()
+        cfg["port"] = 0
+        with self.assertRaises(ValueError):
+            WebSocketConnector(cfg)
+
+    def test_init_missing_api_key(self):
+        cfg = self.config.copy()
+        del cfg["api_key"]
+        with self.assertRaises(ValueError):
+            WebSocketConnector(cfg)
+
+    def test_init_api_key_not_str(self):
+        cfg = self.config.copy()
+        cfg["api_key"] = 123
+        with self.assertRaises(ValueError):
+            WebSocketConnector(cfg)
+
+    def test_init_missing_api_secret(self):
+        cfg = self.config.copy()
+        del cfg["api_secret"]
+        with self.assertRaises(ValueError):
+            WebSocketConnector(cfg)
+
+    def test_init_api_secret_not_str(self):
+        cfg = self.config.copy()
+        cfg["api_secret"] = 123
+        with self.assertRaises(ValueError):
+            WebSocketConnector(cfg)
+
+    def test_init_max_buffer_not_int(self):
+        cfg = self.config.copy()
+        cfg["max_buffer_size"] = "10000"
+        with self.assertRaises(ValueError):
+            WebSocketConnector(cfg)
+
+    def test_init_max_buffer_non_positive(self):
+        cfg = self.config.copy()
+        cfg["max_buffer_size"] = 0
+        with self.assertRaises(ValueError):
+            WebSocketConnector(cfg)
 
     # ----- connect / disconnect / is_connected -----
     def test_initial_not_connected(self):
@@ -68,7 +116,6 @@ class TestFIXConnector(unittest.TestCase):
         self.connector.connect()
         symbols = ["EURUSD", "GBPUSD"]
         self.connector.subscribe(symbols)
-        # Не вызывает ошибок, можно проверить внутреннее состояние через inject_tick/recv_message
 
     def test_subscribe_not_connected(self):
         with self.assertRaises(RuntimeError):
@@ -81,7 +128,7 @@ class TestFIXConnector(unittest.TestCase):
 
     def test_subscribe_empty_list(self):
         self.connector.connect()
-        self.connector.subscribe([])  # должно быть допустимо
+        self.connector.subscribe([])
 
     def test_subscribe_invalid_symbol(self):
         self.connector.connect()
@@ -93,7 +140,6 @@ class TestFIXConnector(unittest.TestCase):
         self.connector.connect()
         self.connector.subscribe(["EURUSD"])
         self.connector.unsubscribe(["EURUSD"])
-        # не падает
 
     def test_unsubscribe_not_connected(self):
         with self.assertRaises(RuntimeError):
@@ -108,15 +154,15 @@ class TestFIXConnector(unittest.TestCase):
     def test_send_order_valid_buy(self):
         self.connector.connect()
         order = {"symbol": "EURUSD", "side": "buy", "size": 10000, "price": 120000}
-        order_id = self.connector.send_order(order)
-        self.assertIsInstance(order_id, str)
-        self.assertGreater(len(order_id), 0)
+        oid = self.connector.send_order(order)
+        self.assertIsInstance(oid, str)
+        self.assertGreater(len(oid), 0)
 
     def test_send_order_valid_sell(self):
         self.connector.connect()
         order = {"symbol": "GBPUSD", "side": "sell", "size": 5000, "price": 150000}
-        order_id = self.connector.send_order(order)
-        self.assertIsInstance(order_id, str)
+        oid = self.connector.send_order(order)
+        self.assertIsInstance(oid, str)
 
     def test_send_order_not_connected(self):
         with self.assertRaises(RuntimeError):
@@ -124,51 +170,50 @@ class TestFIXConnector(unittest.TestCase):
 
     def test_send_order_missing_key(self):
         self.connector.connect()
-        bad_order = {"symbol": "EURUSD", "side": "buy", "size": 100}
+        bad = {"symbol": "EURUSD", "side": "buy", "size": 100}
         with self.assertRaises(ValueError):
-            self.connector.send_order(bad_order)
+            self.connector.send_order(bad)
 
     def test_send_order_invalid_side(self):
         self.connector.connect()
-        bad_order = {"symbol": "EURUSD", "side": "invalid", "size": 100, "price": 100}
+        bad = {"symbol": "EURUSD", "side": "invalid", "size": 100, "price": 100}
         with self.assertRaises(ValueError):
-            self.connector.send_order(bad_order)
+            self.connector.send_order(bad)
 
     def test_send_order_size_not_int(self):
         self.connector.connect()
-        bad_order = {"symbol": "EURUSD", "side": "buy", "size": 100.5, "price": 100}
+        bad = {"symbol": "EURUSD", "side": "buy", "size": 100.5, "price": 100}
         with self.assertRaises(ValueError):
-            self.connector.send_order(bad_order)
+            self.connector.send_order(bad)
 
     def test_send_order_size_non_positive(self):
         self.connector.connect()
-        bad_order = {"symbol": "EURUSD", "side": "buy", "size": 0, "price": 100}
+        bad = {"symbol": "EURUSD", "side": "buy", "size": 0, "price": 100}
         with self.assertRaises(ValueError):
-            self.connector.send_order(bad_order)
+            self.connector.send_order(bad)
 
     def test_send_order_price_not_int(self):
         self.connector.connect()
-        bad_order = {"symbol": "EURUSD", "side": "buy", "size": 100, "price": 100.5}
+        bad = {"symbol": "EURUSD", "side": "buy", "size": 100, "price": 100.5}
         with self.assertRaises(ValueError):
-            self.connector.send_order(bad_order)
+            self.connector.send_order(bad)
 
     def test_send_order_price_non_positive(self):
         self.connector.connect()
-        bad_order = {"symbol": "EURUSD", "side": "buy", "size": 100, "price": 0}
+        bad = {"symbol": "EURUSD", "side": "buy", "size": 100, "price": 0}
         with self.assertRaises(ValueError):
-            self.connector.send_order(bad_order)
+            self.connector.send_order(bad)
 
-    def test_send_order_deterministic_id(self):
+    def test_send_order_deterministic_ids(self):
         self.connector.connect()
         order = {"symbol": "EURUSD", "side": "buy", "size": 100, "price": 100}
         id1 = self.connector.send_order(order)
         id2 = self.connector.send_order(order)
-        self.assertNotEqual(id1, id2)  # каждый ордер уникальный
-        # но при повторном создании нового коннектора порядок должен совпадать
-        connector2 = FIXConnector(self.config)
-        connector2.connect()
-        id1b = connector2.send_order(order)
-        id2b = connector2.send_order(order)
+        self.assertNotEqual(id1, id2)
+        conn2 = WebSocketConnector(self.config)
+        conn2.connect()
+        id1b = conn2.send_order(order)
+        id2b = conn2.send_order(order)
         self.assertEqual(id1, id1b)
         self.assertEqual(id2, id2b)
 
@@ -176,8 +221,8 @@ class TestFIXConnector(unittest.TestCase):
     def test_cancel_order_success(self):
         self.connector.connect()
         order = {"symbol": "EURUSD", "side": "buy", "size": 100, "price": 100}
-        order_id = self.connector.send_order(order)
-        result = self.connector.cancel_order(order_id)
+        oid = self.connector.send_order(order)
+        result = self.connector.cancel_order(oid)
         self.assertTrue(result)
 
     def test_cancel_order_not_connected(self):
@@ -214,11 +259,10 @@ class TestFIXConnector(unittest.TestCase):
         tick = {"symbol": "EURUSD", "bid": 120000, "ask": 120010, "timestamp": 1000}
         self.connector.inject_tick(tick)
         msg1 = self.connector.recv_message()
-        # новый коннектор
-        connector2 = FIXConnector(self.config)
-        connector2.connect()
-        connector2.inject_tick(tick)
-        msg2 = connector2.recv_message()
+        conn2 = WebSocketConnector(self.config)
+        conn2.connect()
+        conn2.inject_tick(tick)
+        msg2 = conn2.recv_message()
         self.assertEqual(msg1, msg2)
 
     def test_inject_tick_invalid(self):
@@ -228,32 +272,30 @@ class TestFIXConnector(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.connector.inject_tick({"symbol": "EURUSD"})  # missing fields
 
-    # ----- recv_message after order execution -----
     def test_recv_message_after_order(self):
         self.connector.connect()
         order = {"symbol": "EURUSD", "side": "buy", "size": 1000, "price": 120000}
-        order_id = self.connector.send_order(order)
-        # Возможно, коннектор генерирует сообщение об исполнении
+        oid = self.connector.send_order(order)
         msg = self.connector.recv_message()
         if msg:
             self.assertIn("type", msg)
             self.assertIn("order_id", msg)
 
-    # ----- determinism of multiple operations -----
+    # ----- determinism of whole sequence -----
     def test_deterministic_sequence(self):
-        def run_sequence():
-            conn = FIXConnector(self.config)
+        def run():
+            conn = WebSocketConnector(self.config)
             conn.connect()
             conn.subscribe(["EURUSD"])
-            order_id = conn.send_order({"symbol": "EURUSD", "side": "buy", "size": 100, "price": 100})
-            conn.cancel_order(order_id)
+            oid = conn.send_order({"symbol": "EURUSD", "side": "buy", "size": 100, "price": 100})
+            conn.cancel_order(oid)
             conn.inject_tick({"symbol": "EURUSD", "bid": 100, "ask": 101, "timestamp": 1})
             msg = conn.recv_message()
             conn.disconnect()
-            return (order_id, msg)
+            return (oid, msg)
 
-        r1 = run_sequence()
-        r2 = run_sequence()
+        r1 = run()
+        r2 = run()
         self.assertEqual(r1, r2)
 
 
