@@ -443,4 +443,5 @@ class WebSocketConnector:
         self._tick_history[symbol_upper].append(tick)
         
         # Keep only last 1000 ticks per symbol
-        if len(self._tick_history[symbol_upper]) >
+        if len(self._tick_history[symbol_upper]) > 1000:
+            self._tick_history[symbol_upper] = self._tick_history[symbol_upper][-1000:]
