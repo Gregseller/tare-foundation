@@ -110,13 +110,19 @@ class RegimeDetector:
         lookback_int = lookback
         momentum_abs = abs(momentum)
         
+        # Efficiency ratio: насколько прямолинейно движение (0-10000)
+        total_path = volatility  # сумма абсолютных изменений
+        net_move = momentum_abs  # |цена_конца - цена_начала|
+        efficiency_ratio = (net_move * 10000) // (total_path + 1)
+
         # Determine regime using deterministic rules
         regime = self._classify_regime(
             momentum_abs,
             volatility,
             reversals,
             price_range,
-            lookback_int
+            lookback_int,
+            efficiency_ratio
         )
         
         # Calculate probabilities for this regime
@@ -139,7 +145,8 @@ class RegimeDetector:
         volatility: int,
         reversals: int,
         price_range: int,
-        lookback: int
+        lookback: int,
+        efficiency_ratio: int = 0
     ) -> str:
         """
         Classify regime based on calculated indicators.
@@ -164,18 +171,22 @@ class RegimeDetector:
         # Reversal ratio
         reversal_ratio = (reversals * 10000) // lookback if lookback > 0 else 0
         
-        # High volatility check
-        if volatility_per_tick > (price_range // 2) if price_range > 0 else False:
-            return self.REGIME_VOLATILE
-        
-        # High reversal check
-        if reversal_ratio > 4000:  # >40% reversals
-            return self.REGIME_MEAN_REVERT
-        
-        # Strong momentum check
-        if momentum_per_tick > volatility_per_tick // 2:
+        # Trending: efficiency_ratio > 150 (1.5%) — движение прямолинейное
+        if efficiency_ratio > 150:
             return self.REGIME_TRENDING
-        
+
+        # High volatility: волатильность высокая относительно диапазона
+        if price_range > 0 and volatility_per_tick > (price_range * 10000) // (lookback + 1):
+            return self.REGIME_VOLATILE
+
+        # Mean revert: много разворотов
+        if reversal_ratio > 6000:
+            return self.REGIME_MEAN_REVERT
+
+        # Volatile: высокая волатильность на тик
+        if volatility_per_tick > 3000:
+            return self.REGIME_VOLATILE
+
         # Default to sideways
         return self.REGIME_SIDEWAYS
     
