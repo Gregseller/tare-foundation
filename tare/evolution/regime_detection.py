@@ -158,8 +158,8 @@ class RegimeDetector:
             return self.REGIME_UNKNOWN
         
         # Normalize volatility to per-tick basis
-        volatility_per_tick = volatility // lookback if lookback > 0 else 0
-        momentum_per_tick = momentum_abs // lookback if lookback > 0 else 0
+        volatility_per_tick = (volatility * 10000) // lookback if lookback > 0 else 0
+        momentum_per_tick = (momentum_abs * 10000) // lookback if lookback > 0 else 0
         
         # Reversal ratio
         reversal_ratio = (reversals * 10000) // lookback if lookback > 0 else 0
@@ -210,8 +210,8 @@ class RegimeDetector:
             }
         
         # Calculate base probabilities
-        volatility_per_tick = volatility // lookback if lookback > 0 else 0
-        momentum_per_tick = momentum_abs // lookback if lookback > 0 else 0
+        volatility_per_tick = (volatility * 10000) // lookback if lookback > 0 else 0
+        momentum_per_tick = (momentum_abs * 10000) // lookback if lookback > 0 else 0
         reversal_ratio = (reversals * 10000) // lookback if lookback > 0 else 0
         
         # Trending probability: momentum strength
@@ -240,12 +240,11 @@ class RegimeDetector:
         if total == 0:
             total = 1
         
-        scaling = 10000 // total if total > 0 else 1
-        
-        trending_prob = (trending_prob * scaling) // 10000
-        mean_revert_prob = (mean_revert_prob * scaling) // 10000
-        volatile_prob = (volatile_prob * scaling) // 10000
-        sideways_prob = (sideways_prob * scaling) // 10000
+        # Normalize: scale each prob proportionally
+        trending_prob = (trending_prob * 10000) // total
+        mean_revert_prob = (mean_revert_prob * 10000) // total
+        volatile_prob = (volatile_prob * 10000) // total
+        sideways_prob = (sideways_prob * 10000) // total
         
         # Adjust for rounding
         remainder = 10000 - (trending_prob + mean_revert_prob + volatile_prob + sideways_prob)
