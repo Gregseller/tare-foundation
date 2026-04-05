@@ -21,15 +21,13 @@ class RegimeDetector:
     REGIME_VOLATILE = "volatile"
     REGIME_UNKNOWN = "unknown"
     
-    def __init__(self, tick_data_engine):
+    def __init__(self, tick_data_engine=None):
         """
         Initialize RegimeDetector with tick data engine dependency.
         
         Args:
             tick_data_engine: TickDataEngine instance for accessing tick data.
         """
-        if tick_data_engine is None:
-            raise ValueError("tick_data_engine cannot be None")
         
         self._tick_engine = tick_data_engine
         self._regime_cache = {}
