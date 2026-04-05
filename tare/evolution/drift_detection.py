@@ -399,6 +399,11 @@ class DriftDetector:
         """
         return self._drift_metrics.copy()
     
+
     def regime_signature(self, market_data: dict) -> str:
-        """
-        Compute deterministic signature of current market regime.
+        """Compute deterministic signature of current market regime."""
+        if not isinstance(market_data, dict):
+            raise ValueError("market_data must be dict")
+        import hashlib
+        data_str = str(sorted(market_data.items()))
+        return hashlib.sha256(data_str.encode()).hexdigest()[:16]
